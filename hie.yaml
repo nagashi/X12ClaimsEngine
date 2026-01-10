@@ -1,0 +1,10 @@
+cradle:
+  stack:
+    - path: "./src"
+      component: "claims-x12-dsl:lib"
+    - path: "./app/Main.hs"
+      component: "claims-x12-dsl:exe:claims-x12-dsl-exe"
+    - path: "./test"
+      component: "claims-x12-dsl:test:claims-x12-dsl-test"
+    - path: "./Setup.hs"
+      component: "claims-x12-dsl:lib"
