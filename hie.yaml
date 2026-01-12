@@ -1,3 +1,15 @@
+# hie.yaml - Configuration for Haskell IDE Engine / Haskell Language Server (HLS)
+#
+# This file tells your IDE (VS Code, Emacs, Vim, etc.) how to understand your project structure.
+# It maps source directories to their build components so the language server can provide:
+#   - Code completion
+#   - Type information on hover
+#   - Go-to-definition
+#   - Error checking
+#   - Refactoring support
+#
+# Using Stack's cradle to tell HLS which components each path belongs to.
+
 cradle:
   stack:
     - path: "./src"

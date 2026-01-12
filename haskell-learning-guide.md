@@ -784,6 +784,71 @@ readAndProcess path = do
   putStrLn ("File has " ++ show lineCount ++ " lines")
 ```
 
+**Understanding `IO ()` and `return ()`:**
+
+These confuse many beginners. Let's break them down:
+
+**What is `()`?**
+- `()` is called "unit" - it's a type with only one value: `()`
+- Think of it like `void` in C/Java or `None` in Python
+- It represents "no meaningful value" or "nothing"
+
+**What is `IO ()`?**
+- `IO ()` means "an IO action that produces no meaningful result"
+- Read it as: "an IO action that returns unit"
+- Examples: `putStrLn`, `print`, file writing - they do something but don't return useful data
+
+```haskell
+-- IO () = IO action that returns nothing useful
+putStrLn :: String -> IO ()  -- Prints, returns nothing
+
+-- IO String = IO action that returns a String
+getLine :: IO String         -- Gets input, returns the string
+
+-- IO Int = IO action that returns an Int
+readLn :: IO Int            -- Reads number, returns it
+```
+
+**What is `return ()`?**
+- `return` wraps a value in a monad (remember: it's like `pure`)
+- `return ()` wraps the unit value `()` in a monad
+- It means "do nothing, just return unit"
+- Often used as a base case in recursion or when you need to return from a `do` block
+
+```haskell
+-- Example: base case in recursion
+printNumbersAsc :: Int -> IO ()
+printNumbersAsc 0 = return ()  -- Base case: do nothing, stop recursion
+printNumbersAsc n = do
+  printNumbersAsc (n - 1)
+  print n
+
+-- Example: explicit return (often unnecessary)
+greet :: String -> IO ()
+greet name = do
+  putStrLn ("Hello, " ++ name)
+  return ()  -- This is actually optional here!
+
+-- This is equivalent:
+greet' :: String -> IO ()
+greet' name = putStrLn ("Hello, " ++ name)
+```
+
+**Key insight:** `return ()` is NOT like `return` in other languages!
+- In C/Java/Python: `return` exits the function immediately
+- In Haskell: `return` just wraps a value in a monad, execution continues
+
+```haskell
+-- This might surprise you:
+confusing :: IO ()
+confusing = do
+  putStrLn "First"
+  return ()           -- Does NOT exit!
+  putStrLn "Second"   -- This still runs!
+  putStrLn "Third"
+-- Prints: First, Second, Third
+```
+
 ### Why Monads Matter
 
 Without monads, you'd need different syntax for:
