@@ -1,4 +1,5 @@
 # A Practical Guide to Learning Haskell
+**by Charles O'Riley (with contributions from Warp)**
 
 ## Introduction
 
