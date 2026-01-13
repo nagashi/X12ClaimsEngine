@@ -1,10 +1,12 @@
 name:                claims-x12-dsl
 version:             0.1.0.0
-github:              "githubuser/claims-x12-dsl"
+github:              "nagashi/claims-x12-dsl"
 license:             BSD-3-Clause
-author:              "Author name here"
-maintainer:          "example@example.com"
-copyright:           "2026 Author name here"
+author:              "Charles Ellis O'Riley Jr."
+maintainer:          "ceoriley@gmail.com"
+copyright:           "2026 Charles Ellis O'Riley Jr."
+synopsis:            Type-safe DSL for healthcare claims validation and X12 processing
+category:            Healthcare
 
 extra-source-files:
 - README.md
@@ -17,7 +19,7 @@ extra-source-files:
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/githubuser/claims-x12-dsl#readme>
+description:         A type-safe, composable DSL for healthcare claims validation with both internal (Haskell) and external (text-based) syntax. Features GADT-based rules, comprehensive validation support, and business-friendly rule definitions.
 
 dependencies:
 - base >= 4.7 && < 5

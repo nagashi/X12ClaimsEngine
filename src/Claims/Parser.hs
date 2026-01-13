@@ -15,7 +15,7 @@ import Text.Parsec.Expr (buildExpressionParser, Operator(..), Assoc(..))
 import qualified Text.Parsec.Token as P
 import Text.Parsec.Language (emptyDef)
 import Data.Text (pack)
-import Data.Decimal (Decimal, realFracToDecimal)
+import Data.Decimal (realFracToDecimal)
 
 -- Lexer definition
 lexer :: P.TokenParser ()
@@ -106,7 +106,7 @@ parens = P.parens lexer
 parseAmountComparison :: Parser Condition
 parseAmountComparison = do
   reserved "claim"
-  dot
+  _ <- dot
   reserved "amount"
   op <- parseCompOp
   value <- try float <|> fmap fromInteger natural
@@ -116,7 +116,7 @@ parseAmountComparison = do
 parseAmountBetween :: Parser Condition
 parseAmountBetween = do
   reserved "claim"
-  dot
+  _ <- dot
   reserved "amount"
   reserved "BETWEEN"
   low <- try float <|> fmap fromInteger natural
@@ -128,7 +128,7 @@ parseAmountBetween = do
 parseHasDiagnosis :: Parser Condition
 parseHasDiagnosis = do
   reserved "claim"
-  dot
+  _ <- dot
   reserved "has_diagnosis"
   code <- stringLiteral
   return $ CheckDiagnosis code
@@ -137,7 +137,7 @@ parseHasDiagnosis = do
 parseHasProcedure :: Parser Condition
 parseHasProcedure = do
   reserved "claim"
-  dot
+  _ <- dot
   reserved "has_procedure"
   code <- stringLiteral
   return $ CheckProcedure code
@@ -146,7 +146,7 @@ parseHasProcedure = do
 parsePlaceOfService :: Parser Condition
 parsePlaceOfService = do
   reserved "claim"
-  dot
+  _ <- dot
   reserved "place_of_service"
   reservedOp "="
   pos <- stringLiteral
@@ -156,7 +156,7 @@ parsePlaceOfService = do
 parseClaimType :: Parser Condition
 parseClaimType = do
   reserved "claim"
-  dot
+  _ <- dot
   reserved "type"
   reservedOp "="
   ct <- stringLiteral
@@ -197,12 +197,13 @@ convertCondition :: Condition -> Rule Bool
 convertCondition cond = case cond of
   CompareAmount op value -> 
     let amt = realFracToDecimal 2 value
+        epsilon = realFracToDecimal 2 (0.01 :: Double)
     in case op of
       Gt -> T.greaterThan amt
       Lt -> T.lessThan amt
-      Eq -> T.AmountGreaterThan amt `T.And` T.AmountLessThan (amt + realFracToDecimal 2 0.01)
-      Gte -> T.greaterThan amt `T.Or` (T.AmountGreaterThan amt `T.And` T.AmountLessThan (amt + realFracToDecimal 2 0.01))
-      Lte -> T.lessThan amt `T.Or` (T.AmountGreaterThan amt `T.And` T.AmountLessThan (amt + realFracToDecimal 2 0.01))
+      Eq -> T.AmountGreaterThan amt `T.And` T.AmountLessThan (amt + epsilon)
+      Gte -> T.greaterThan amt `T.Or` (T.AmountGreaterThan amt `T.And` T.AmountLessThan (amt + epsilon))
+      Lte -> T.lessThan amt `T.Or` (T.AmountGreaterThan amt `T.And` T.AmountLessThan (amt + epsilon))
   AmountBetween low high -> T.between (realFracToDecimal 2 low) (realFracToDecimal 2 high)
   CheckDiagnosis code -> T.hasDx (pack code)
   CheckProcedure code -> T.hasPx (pack code)

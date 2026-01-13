@@ -7,8 +7,6 @@ module Claims.Interpreter
   ) where
 
 import Claims.Types
-import Data.Text (Text)
-import qualified Data.Text as T
 
 -- | Evaluate a rule against a claim
 eval :: Claim -> Rule a -> a

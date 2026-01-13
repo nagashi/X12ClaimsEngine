@@ -6,7 +6,7 @@ import Claims.Types
 import Claims.Interpreter
 import Claims.Rules
 import Data.Time (fromGregorian)
-import Data.Decimal (Decimal, realFracToDecimal)
+import Data.Decimal (realFracToDecimal)
 
 -- | Example claim from the requirements document
 exampleClaim :: Claim
@@ -15,7 +15,7 @@ exampleClaim = Claim
   , patientId = "PAT12345"
   , providerId = "PRV98765"
   , serviceDate = fromGregorian 2025 1 5
-  , totalAmount = realFracToDecimal 2 75000
+  , totalAmount = realFracToDecimal 2 (75000 :: Double)
   , diagnosisCodes = ["I21.0", "I25.10"]
   , procedureCodes = ["99223", "93000"]
   , placeOfService = "21"
