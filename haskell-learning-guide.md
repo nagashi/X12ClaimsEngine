@@ -491,6 +491,311 @@ result = (map (*2) . filter even) [1..10]
 -- [4,8,12,16,20]
 ```
 
+### Function Composition: Building Pipelines
+
+Function composition (`.`) is one of Haskell's most powerful features. It lets you build complex operations by combining simple functions.
+
+#### The Basics
+
+```haskell
+-- The . operator composes functions
+-- (f . g) x = f (g x)
+-- Read it right to left: "apply g, then apply f"
+
+-- Simple example:
+addOne :: Int -> Int
+addOne x = x + 1
+
+double :: Int -> Int
+double x = x * 2
+
+-- Compose them: first add 1, then double
+doubleAfterAdd :: Int -> Int
+doubleAfterAdd = double . addOne
+
+result = doubleAfterAdd 5  -- (5 + 1) * 2 = 12
+
+-- Without composition (nested calls):
+result' = double (addOne 5)  -- Same result, less elegant
+```
+
+#### Why Use Function Composition?
+
+1. **Readability**: Creates clear data transformation pipelines
+2. **Reusability**: Build complex functions from simple building blocks
+3. **Point-free style**: Define functions without mentioning their arguments
+4. **Performance**: Compiler can optimize composed functions
+
+#### Real-World Example 1: Data Processing Pipeline
+
+```haskell
+-- Process a list of numbers:
+-- 1. Filter out odd numbers
+-- 2. Square each number
+-- 3. Sum the results
+
+-- Without composition (nested, hard to read)
+resultNested = sum (map (^2) (filter even [1..10]))
+
+-- With composition (clear pipeline)
+processNumbers :: [Int] -> Int
+processNumbers = sum . map (^2) . filter even
+
+result = processNumbers [1..10]  -- 220
+-- Pipeline: [1..10] -> [2,4,6,8,10] -> [4,16,36,64,100] -> 220
+```
+
+#### Real-World Example 2: String Processing
+
+```haskell
+import Data.Char (toUpper, isSpace)
+import Data.List (dropWhile, dropWhileEnd)
+
+-- Clean and format user input:
+-- 1. Remove leading/trailing whitespace
+-- 2. Convert to uppercase
+-- 3. Replace spaces with underscores
+
+trim :: String -> String
+trim = dropWhileEnd isSpace . dropWhile isSpace
+
+replaceSpaces :: String -> String
+replaceSpaces = map (\c -> if c == ' ' then '_' else c)
+
+-- Compose all transformations
+formatInput :: String -> String
+formatInput = replaceSpaces . map toUpper . trim
+
+-- Try it:
+result1 = formatInput "  hello world  "  -- "HELLO_WORLD"
+result2 = formatInput "Haskell is great "  -- "HASKELL_IS_GREAT"
+```
+
+#### Real-World Example 3: Working with Maybe
+
+```haskell
+import Data.Char (isDigit)
+import Text.Read (readMaybe)
+
+-- Validate and process user input
+-- Input: string that should be a positive number
+-- Output: Maybe Int (doubled if valid)
+
+validatePositive :: Int -> Maybe Int
+validatePositive n
+  | n > 0 = Just n
+  | otherwise = Nothing
+
+doubleValue :: Int -> Int
+doubleValue = (*2)
+
+-- Without composition:
+processInput1 :: String -> Maybe Int
+processInput1 s = case readMaybe s of
+  Nothing -> Nothing
+  Just n -> case validatePositive n of
+    Nothing -> Nothing
+    Just valid -> Just (doubleValue valid)
+
+-- With composition (using fmap):
+processInput2 :: String -> Maybe Int
+processInput2 s = fmap doubleValue (readMaybe s >>= validatePositive)
+
+-- Even cleaner with composition:
+processInput3 :: String -> Maybe Int
+processInput3 = fmap (doubleValue) . (>>= validatePositive) . readMaybe
+
+-- Try it:
+-- processInput3 "10"  => Just 20
+-- processInput3 "-5" => Nothing
+-- processInput3 "abc" => Nothing
+```
+
+#### Real-World Example 4: List Transformations
+
+```haskell
+-- Get the sum of squares of even numbers less than 100
+sumOfSquaresOfEvens :: Int
+sumOfSquaresOfEvens = sum . map (^2) . filter even $ [1..100]
+-- Result: 171700
+
+-- Break it down:
+-- [1..100]           -- Start with numbers 1 to 100
+-- filter even        -- Keep only evens: [2,4,6,...,100]
+-- map (^2)           -- Square them: [4,16,36,...,10000]
+-- sum                -- Add them up: 171700
+
+-- Get first 10 even squares
+firstTenEvenSquares :: [Int]
+firstTenEvenSquares = take 10 . map (^2) . filter even $ [1..]
+-- [4,16,36,64,100,144,196,256,324,400]
+
+-- Note: Works with infinite lists thanks to laziness!
+```
+
+#### Real-World Example 5: Chaining Validations
+
+```haskell
+-- Validate email addresses
+import Data.Char (isAlphaNum)
+import Data.List (isInfixOf)
+
+type ValidationError = String
+
+-- Individual validation functions
+hasAtSign :: String -> Either ValidationError String
+hasAtSign email
+  | '@' `elem` email = Right email
+  | otherwise = Left "Email must contain @"
+
+hasValidLength :: String -> Either ValidationError String
+hasValidLength email
+  | length email >= 5 = Right email
+  | otherwise = Left "Email too short"
+
+hasDomain :: String -> Either ValidationError String
+hasDomain email
+  | "." `isInfixOf` email = Right email
+  | otherwise = Left "Email must have a domain"
+
+-- Compose validators (each depends on previous success)
+validateEmail :: String -> Either ValidationError String
+validateEmail email = 
+  hasAtSign email >>= hasValidLength >>= hasDomain
+
+-- Try it:
+-- validateEmail "user@example.com"  => Right "user@example.com"
+-- validateEmail "user"              => Left "Email must contain @"
+-- validateEmail "@."                => Left "Email too short"
+```
+
+#### Point-Free Style (Advanced)
+
+**Point-free style** means defining functions without explicitly mentioning their arguments. Function composition enables this:
+
+```haskell
+-- With explicit argument ("pointed" style)
+sumSquares1 :: [Int] -> Int
+sumSquares1 xs = sum (map (^2) xs)
+
+-- Point-free style (no xs mentioned)
+sumSquares2 :: [Int] -> Int
+sumSquares2 = sum . map (^2)
+
+-- Both are equivalent!
+
+-- More examples:
+-- Pointed:
+lengthOfEvens1 :: [Int] -> Int
+lengthOfEvens1 xs = length (filter even xs)
+
+-- Point-free:
+lengthOfEvens2 :: [Int] -> Int
+lengthOfEvens2 = length . filter even
+
+-- Pointed:
+doubleAll1 :: [Int] -> [Int]
+doubleAll1 xs = map (*2) xs
+
+-- Point-free:
+doubleAll2 :: [Int] -> [Int]
+doubleAll2 = map (*2)
+```
+
+**When to use point-free:**
+- ✅ When it makes code clearer
+- ✅ For simple pipelines
+- ❌ Don't force it if it reduces readability
+- ❌ Avoid for complex logic
+
+#### Composition vs Application ($)
+
+```haskell
+-- . (composition) combines functions
+-- $ (application) applies a function
+
+-- Composition (.):
+-- Creates a NEW function by combining functions
+f :: Int -> Int
+f = (*2) . (+1)  -- A function that adds 1 then doubles
+
+result1 = f 5    -- 12
+
+-- Application ($):
+-- Applies a function to a value (avoids parentheses)
+result2 = (*2) $ (+1) $ 5  -- Same as: (*2) ((+1) 5) = 12
+
+-- When to use each:
+-- Use . to build reusable functions
+processList :: [Int] -> Int
+processList = sum . map (*2) . filter even
+
+-- Use $ to apply functions without parentheses
+result3 = print $ sum $ map (*2) [1,2,3]
+-- Instead of: print (sum (map (*2) [1,2,3]))
+
+-- Combining both:
+result4 = print $ processList [1..10]
+```
+
+#### Common Patterns with Composition
+
+```haskell
+-- Pattern 1: Filter then transform
+getEvenSquares :: [Int] -> [Int]
+getEvenSquares = map (^2) . filter even
+
+-- Pattern 2: Transform then aggregate
+sumOfDoubles :: [Int] -> Int
+sumOfDoubles = sum . map (*2)
+
+-- Pattern 3: Multiple filters
+getSpecialNumbers :: [Int] -> [Int]
+getSpecialNumbers = filter (>10) . filter even . filter (<100)
+-- Better: combine filters
+getSpecialNumbers' = filter (\x -> even x && x > 10 && x < 100)
+
+-- Pattern 4: Nested transformations
+processNestedList :: [[Int]] -> Int
+processNestedList = sum . map (sum . map (*2))
+-- For [[1,2],[3,4]]: sum [6, 14] = 20
+
+-- Pattern 5: Type conversions
+parseAndDouble :: String -> Maybe Int
+parseAndDouble = fmap (*2) . readMaybe
+```
+
+#### Practice Exercises
+
+Try to solve these using function composition:
+
+```haskell
+-- Exercise 1: Count even numbers in a list
+countEvens :: [Int] -> Int
+countEvens = length . filter even
+
+-- Exercise 2: Get last 3 elements of a list (if exist)
+lastThree :: [a] -> [a]
+lastThree = reverse . take 3 . reverse
+-- Or better: drop (length xs - 3) xs
+
+-- Exercise 3: Check if all numbers are positive
+allPositive :: [Int] -> Bool
+allPositive = all (>0)
+-- Or: null . filter (<=0)
+
+-- Exercise 4: Convert list of strings to uppercase and sort
+processStrings :: [String] -> [String]
+processStrings = sort . map (map toUpper)
+
+-- Exercise 5: Sum of digits of a number
+import Data.Char (digitToInt)
+
+sumDigits :: Int -> Int
+sumDigits = sum . map digitToInt . show
+-- Example: sumDigits 123 => 6
+```
+
 ### Loops Don't Exist (And That's OK)
 
 Haskell doesn't have traditional loops like `for` or `while`. Instead, it uses **recursion** and **higher-order functions** like `map`, `filter`, and `fold`.
